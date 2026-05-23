@@ -1,21 +1,20 @@
 class CambioMoneda {
-  final int id;
-  final int idMoneda;
+  final int? id;
   final DateTime fecha;
   final double valor;
+  final String? nombreMoneda;
 
   CambioMoneda({
-    required this.id,
-    required this.idMoneda,
+    this.id,
     required this.fecha,
     required this.valor,
+    this.nombreMoneda,
   });
 
-  //Convierte el .JSON que llega en objeto CambioMoneda
   factory CambioMoneda.fromJson(Map<String, dynamic> json) {
     return CambioMoneda(
-      id: json['id'] ?? 0,
-      idMoneda: json['idMoneda'] ?? 0,
+      id: json['moneda']?['id'],
+      nombreMoneda: json['moneda']?['nombre'],
       fecha: json['fecha'] != null
           ? DateTime.parse(json['fecha'])
           : DateTime.now(),
@@ -23,17 +22,15 @@ class CambioMoneda {
     );
   }
 
-  //Convierte el objeto CambioMoneda a JSON
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'idMoneda': idMoneda,
+      'nombreMoneda': nombreMoneda,
       'fecha': fecha.toIso8601String(),
       'valor': valor,
     };
   }
 
-  //Metodo auxiliar para poder mostrar el cambio de moneda en la lista
   @override
   String toString() {
     return '${fecha.day}/${fecha.month}/${fecha.year}: ${valor.toStringAsFixed(2)}';

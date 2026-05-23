@@ -22,7 +22,7 @@ public class CambioMoneda {
     @Column(name = "fecha")
     private Date fecha;
 
-    @Column(name = "cambio")
+    @Column(name = "valor")
     private double valor;
 
     public CambioMoneda() {

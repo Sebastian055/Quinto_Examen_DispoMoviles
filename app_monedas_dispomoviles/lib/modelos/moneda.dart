@@ -20,7 +20,7 @@ class Moneda {
     return Moneda(
       id: json['id'] ?? 0,
       sigla: json['sigla'] ?? '',
-      moneda: json['moneda'] ?? '',
+      moneda: json['nombre'] ?? '',
       simbolo: json['simbolo'] ?? '',
       emisor: json['emisor'] ?? '',
     );

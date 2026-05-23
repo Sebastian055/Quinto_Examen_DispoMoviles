@@ -1,5 +1,4 @@
 // lib/vistas/pantalla_login.dart
-
 import 'package:flutter/material.dart';
 import '../servicios/autenticacion_servicio.dart';
 import 'pantalla_principal.dart';
@@ -25,7 +24,7 @@ class _PantallaLoginState extends State<PantallaLogin> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const SizedBox(height: 40),
+            const SizedBox(height: 60),
             const Text('Usuario:'),
             const SizedBox(height: 8),
             TextField(controller: _usuarioController),
@@ -67,16 +66,24 @@ class _PantallaLoginState extends State<PantallaLogin> {
     setState(() => _cargando = false);
 
     if (resultado['success'] == true) {
+      final String token = resultado['token']; // ← tomamos el token aquí
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const PantallaPrincipal()),
+          MaterialPageRoute(
+            // ↓ lo pasamos directo, sin depender de secure storage en la siguiente pantalla
+            builder: (context) => PantallaPrincipal(token: token),
+          ),
         );
       }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Usuario o Clave incorrectos')),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(resultado['error'] ?? 'Usuario o Clave incorrectos'),
+          ),
+        );
+      }
     }
   }
 }

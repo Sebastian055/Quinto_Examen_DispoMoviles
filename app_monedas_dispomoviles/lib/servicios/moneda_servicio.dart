@@ -1,6 +1,4 @@
 // lib/servicios/moneda_servicio.dart
-// Propósito: Consumir los endpoints de monedas de la API
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../configuracion/api_configuracion.dart';
@@ -8,7 +6,6 @@ import '../modelos/moneda.dart';
 import '../modelos/cambio_moneda.dart';
 
 class MonedaServicio {
-  /// Requiere el token de autenticación
   Future<List<Moneda>> listarMonedas(String token) async {
     try {
       final url = ApiConfiguracion.getUrlListarMonedas();
@@ -23,10 +20,12 @@ class MonedaServicio {
       );
 
       print('Código respuesta monedas: ${response.statusCode}');
+      print('Body monedas: ${response.body}'); // ← AGREGADO
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => Moneda.fromJson(json)).toList();
+        print('Total monedas parseadas: ${data.length}'); // ← AGREGADO
+        return data.map((item) => Moneda.fromJson(item)).toList();
       } else if (response.statusCode == 403) {
         throw Exception('Sesión expirada. Inicie sesión nuevamente.');
       } else {
@@ -38,8 +37,6 @@ class MonedaServicio {
     }
   }
 
-  /// Obtiene los cambios de una moneda en un rango de fechas
-  /// Requiere el token de autenticación
   Future<List<CambioMoneda>> listarCambiosPorPeriodo({
     required String token,
     required int idMoneda,
@@ -50,15 +47,14 @@ class MonedaServicio {
       final url = ApiConfiguracion.getUrlListarPorPeriodo();
       print('URL listar por período: $url');
 
-      // Formatear fechas para la API (YYYY-MM-DD)
-      final fechaInicioStr = _formatearFecha(fechaInicio);
-      final fechaFinStr = _formatearFecha(fechaFin);
+      // ← CORREGIDO: solo YYYY-MM-DD, sin la parte de tiempo
+      final desdeStr = _formatearFecha(fechaInicio);
+      final hastaStr = _formatearFecha(fechaFin);
 
-      // Construir el cuerpo de la petición POST
       final Map<String, dynamic> body = {
         'idMoneda': idMoneda,
-        'fechaInicio': fechaInicioStr,
-        'fechaFin': fechaFinStr,
+        'desde': fechaInicio.toIso8601String(),
+        'hasta': fechaFin.toIso8601String(),
       };
 
       print('Cuerpo de la petición: $body');
@@ -77,7 +73,7 @@ class MonedaServicio {
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        return data.map((json) => CambioMoneda.fromJson(json)).toList();
+        return data.map((item) => CambioMoneda.fromJson(item)).toList();
       } else if (response.statusCode == 403) {
         throw Exception('Sesión expirada. Inicie sesión nuevamente.');
       } else {
@@ -91,14 +87,11 @@ class MonedaServicio {
     }
   }
 
-  // MÉTODO AUXILIAR PRIVADO
-
-  /// Convierte DateTime a formato YYYY-MM-DD
+  // Formato YYYY-MM-DD que espera la API
   String _formatearFecha(DateTime fecha) {
     return '${fecha.year}-${_agregarCero(fecha.month)}-${_agregarCero(fecha.day)}';
   }
 
-  /// Agrega un cero adelante si el número es menor a 10
   String _agregarCero(int numero) {
     return numero.toString().padLeft(2, '0');
   }
