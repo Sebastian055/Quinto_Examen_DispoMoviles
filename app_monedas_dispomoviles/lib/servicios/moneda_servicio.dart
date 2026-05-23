@@ -1,4 +1,3 @@
-// lib/servicios/moneda_servicio.dart
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../configuracion/api_configuracion.dart';
@@ -20,11 +19,11 @@ class MonedaServicio {
       );
 
       print('Código respuesta monedas: ${response.statusCode}');
-      print('Body monedas: ${response.body}'); // ← AGREGADO
+      print('Body monedas: ${response.body}');
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
-        print('Total monedas parseadas: ${data.length}'); // ← AGREGADO
+        print('Total monedas parseadas: ${data.length}');
         return data.map((item) => Moneda.fromJson(item)).toList();
       } else if (response.statusCode == 403) {
         throw Exception('Sesión expirada. Inicie sesión nuevamente.');
@@ -47,14 +46,13 @@ class MonedaServicio {
       final url = ApiConfiguracion.getUrlListarPorPeriodo();
       print('URL listar por período: $url');
 
-      // ← CORREGIDO: solo YYYY-MM-DD, sin la parte de tiempo
       final desdeStr = _formatearFecha(fechaInicio);
       final hastaStr = _formatearFecha(fechaFin);
 
       final Map<String, dynamic> body = {
         'idMoneda': idMoneda,
-        'desde': fechaInicio.toIso8601String(),
-        'hasta': fechaFin.toIso8601String(),
+        'desde': desdeStr,
+        'hasta': hastaStr,
       };
 
       print('Cuerpo de la petición: $body');
@@ -72,8 +70,28 @@ class MonedaServicio {
       print('Respuesta: ${response.body}');
 
       if (response.statusCode == 200) {
-        final List<dynamic> data = json.decode(response.body);
-        return data.map((item) => CambioMoneda.fromJson(item)).toList();
+        final dynamic data = json.decode(response.body);
+
+        print('Tipo de respuesta: ${data.runtimeType}');
+
+        if (data is List) {
+          if (data.isEmpty) {
+            print('No hay datos en el período seleccionado');
+            return [];
+          }
+          print('Se encontraron ${data.length} registros (como lista)');
+          return data.map((item) => CambioMoneda.fromJson(item)).toList();
+        } else if (data is Map<String, dynamic>) {
+          if (data['fecha'] != null || data['valor'] != null) {
+            print('Se encontró 1 registro (como objeto)');
+            return [CambioMoneda.fromJson(data)];
+          }
+          print('El objeto no contiene datos válidos');
+          return [];
+        } else {
+          print('Formato de respuesta no reconocido: ${data.runtimeType}');
+          return [];
+        }
       } else if (response.statusCode == 403) {
         throw Exception('Sesión expirada. Inicie sesión nuevamente.');
       } else {
@@ -87,7 +105,6 @@ class MonedaServicio {
     }
   }
 
-  // Formato YYYY-MM-DD que espera la API
   String _formatearFecha(DateTime fecha) {
     return '${fecha.year}-${_agregarCero(fecha.month)}-${_agregarCero(fecha.day)}';
   }

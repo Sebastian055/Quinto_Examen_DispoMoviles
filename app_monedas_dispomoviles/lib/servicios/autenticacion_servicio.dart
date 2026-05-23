@@ -1,5 +1,3 @@
-// lib/servicios/autenticacion_servicio.dart
-
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -11,7 +9,7 @@ class AutenticacionServicio {
   final FlutterSecureStorage _storage = const FlutterSecureStorage();
 
   // Clave para guardar el token (es el NOMBRE, no el token)
-  static const String _tokenKey = 'token_usuario'; // ← CORREGIDO
+  static const String _tokenKey = 'token_usuario';
 
   // Inicio de sesion con el servicio
   Future<Map<String, dynamic>> login(String usuario, String clave) async {

@@ -1,4 +1,3 @@
-// lib/vistas/pantalla_principal.dart
 import 'package:flutter/material.dart';
 import '../servicios/autenticacion_servicio.dart';
 import '../servicios/moneda_servicio.dart';
@@ -7,7 +6,7 @@ import '../modelos/cambio_moneda.dart';
 import 'pantalla_login.dart';
 
 class PantallaPrincipal extends StatefulWidget {
-  final String token; // ← recibe el token desde login
+  final String token;
 
   const PantallaPrincipal({super.key, required this.token});
 
@@ -19,7 +18,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   final AutenticacionServicio _authServicio = AutenticacionServicio();
   final MonedaServicio _monedaServicio = MonedaServicio();
 
-  // Controladores para los campos de fecha (texto editables)
   final TextEditingController _fechaInicioController = TextEditingController();
   final TextEditingController _fechaFinController = TextEditingController();
 
@@ -32,7 +30,7 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   @override
   void initState() {
     super.initState();
-    _cargarMonedas(); // usa widget.token directamente, sin leer secure storage
+    _cargarMonedas();
   }
 
   @override
@@ -63,7 +61,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       return;
     }
 
-    // Parsear las fechas desde los TextField
     DateTime? fechaInicio;
     DateTime? fechaFin;
     try {
@@ -93,6 +90,8 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
       });
       if (cambios.isEmpty) {
         _mostrarInfo('No hay datos en el período seleccionado');
+      } else {
+        _mostrarInfo('Se encontraron ${cambios.length} registros');
       }
     } catch (e) {
       setState(() => _consultando = false);
@@ -103,7 +102,6 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   Future<void> _cerrarSesion() async {
     await _authServicio.cerrarSesion();
     if (mounted) {
-      // ← navega directamente a PantallaLogin, sin rutas nombradas
       Navigator.pushReplacement(
         context,
         MaterialPageRoute(builder: (context) => const PantallaLogin()),
@@ -114,25 +112,38 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
   void _mostrarError(String mensaje) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje), backgroundColor: Colors.red),
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: Colors.red[400],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
   void _mostrarInfo(String mensaje) {
     if (!mounted) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(mensaje), backgroundColor: Colors.blue),
+      SnackBar(
+        content: Text(mensaje),
+        backgroundColor: Colors.blue[400],
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Consulta de Cambios de Moneda'),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.black87,
+        title: const Text(
+          'Cambio de Monedas',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.green,
+        foregroundColor: Colors.white,
         elevation: 0,
         actions: [
           IconButton(
@@ -143,101 +154,263 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
         ],
       ),
       body: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // ── Dropdown de monedas ──────────────────────────────────────
-            _cargandoMonedas
-                ? const Center(child: CircularProgressIndicator())
-                : DropdownButtonFormField<Moneda>(
-                    value: _monedaSeleccionada,
-                    isExpanded: true,
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                    ),
-                    items: _monedas.map((moneda) {
-                      return DropdownMenuItem(
-                        value: moneda,
-                        child: Text(moneda.moneda),
-                      );
-                    }).toList(),
-                    onChanged: (moneda) {
-                      setState(() => _monedaSeleccionada = moneda);
-                    },
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey,
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
                   ),
-
-            const SizedBox(height: 16),
-
-            // ── Campo Desde ─────────────────────────────────────────────
-            TextField(
-              controller: _fechaInicioController,
-              decoration: const InputDecoration(
-                labelText: 'Desde (YYYY-MM-DD)',
-                border: OutlineInputBorder(),
+                ],
               ),
-              keyboardType: TextInputType.datetime,
+              child: _cargandoMonedas
+                  ? const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: CircularProgressIndicator(color: Colors.green),
+                      ),
+                    )
+                  : DropdownButtonFormField<Moneda>(
+                      value: _monedaSeleccionada,
+                      isExpanded: true,
+                      decoration: InputDecoration(
+                        labelText: 'Seleccionar moneda',
+                        prefixIcon: const Icon(
+                          Icons.currency_exchange,
+                          color: Colors.green,
+                        ),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 14,
+                        ),
+                      ),
+                      items: _monedas.map((moneda) {
+                        return DropdownMenuItem(
+                          value: moneda,
+                          child: Row(
+                            children: [
+                              const Icon(
+                                Icons.attach_money,
+                                size: 18,
+                                color: Colors.grey,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                moneda.moneda,
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        );
+                      }).toList(),
+                      onChanged: (moneda) {
+                        setState(() => _monedaSeleccionada = moneda);
+                      },
+                    ),
             ),
-
-            const SizedBox(height: 12),
-
-            // ── Campo Hasta ─────────────────────────────────────────────
-            TextField(
-              controller: _fechaFinController,
-              decoration: const InputDecoration(
-                labelText: 'Hasta (YYYY-MM-DD)',
-                border: OutlineInputBorder(),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey,
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
-              keyboardType: TextInputType.datetime,
+              child: TextField(
+                controller: _fechaInicioController,
+                decoration: InputDecoration(
+                  labelText: 'Fecha desde',
+                  hintText: 'YYYY-MM-DD',
+                  prefixIcon: const Icon(
+                    Icons.calendar_today,
+                    color: Colors.green,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                keyboardType: TextInputType.datetime,
+              ),
             ),
-
             const SizedBox(height: 16),
-
-            // ── Botón Consultar ─────────────────────────────────────────
+            Container(
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.grey,
+                    spreadRadius: 1,
+                    blurRadius: 4,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+              ),
+              child: TextField(
+                controller: _fechaFinController,
+                decoration: InputDecoration(
+                  labelText: 'Fecha hasta',
+                  hintText: 'YYYY-MM-DD',
+                  prefixIcon: const Icon(
+                    Icons.calendar_today,
+                    color: Colors.green,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 14,
+                  ),
+                ),
+                keyboardType: TextInputType.datetime,
+              ),
+            ),
+            const SizedBox(height: 24),
             SizedBox(
               width: double.infinity,
+              height: 52,
               child: ElevatedButton(
                 onPressed: _consultando ? null : _consultarCambios,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.white,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 2,
+                ),
                 child: _consultando
                     ? const SizedBox(
-                        height: 20,
-                        width: 20,
+                        height: 22,
+                        width: 22,
                         child: CircularProgressIndicator(
                           color: Colors.white,
                           strokeWidth: 2,
                         ),
                       )
-                    : const Text('Consultar Cambios'),
+                    : const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search),
+                          SizedBox(width: 8),
+                          Text(
+                            'Consultar Cambios',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ],
+                      ),
               ),
             ),
-
-            const SizedBox(height: 16),
-
-            // ── Lista de resultados ─────────────────────────────────────
+            const SizedBox(height: 20),
             Expanded(
               child: _resultados.isEmpty
-                  ? const Center(child: Text('Sin resultados'))
+                  ? Container(
+                      margin: const EdgeInsets.only(top: 40),
+                      child: Column(
+                        children: [
+                          Icon(
+                            Icons.bar_chart,
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            'Sin resultados',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey[500],
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Seleccione una moneda y fechas para consultar',
+                            style: TextStyle(
+                              fontSize: 13,
+                              color: Colors.grey[400],
+                            ),
+                          ),
+                        ],
+                      ),
+                    )
                   : ListView.builder(
                       itemCount: _resultados.length,
                       itemBuilder: (context, index) {
                         final cambio = _resultados[index];
-                        // Formato que pide el examen: "Fecha: YYYY-MM-DD" y "Valor: X"
                         final fechaStr =
-                            '${cambio.fecha.year}-'
-                            '${cambio.fecha.month.toString().padLeft(2, '0')}-'
-                            '${cambio.fecha.day.toString().padLeft(2, '0')}';
-                        return Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 8.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text('Fecha: $fechaStr'),
-                              Text('Valor: ${cambio.valor}'),
+                            '${cambio.fecha.day}/${cambio.fecha.month}/${cambio.fecha.year}';
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 12),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.grey,
+                                spreadRadius: 1,
+                                blurRadius: 3,
+                                offset: const Offset(0, 1),
+                              ),
                             ],
+                          ),
+                          child: ListTile(
+                            title: Text(
+                              'Fecha: ${fechaStr}',
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.black87,
+                              ),
+                            ),
+                            subtitle: Text(
+                              'Valor: ${cambio.valor.toStringAsFixed(4)}',
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                            trailing: cambio.valor > 0
+                                ? const Icon(
+                                    Icons.trending_up,
+                                    color: Colors.green,
+                                  )
+                                : const Icon(
+                                    Icons.trending_down,
+                                    color: Colors.red,
+                                  ),
                           ),
                         );
                       },
